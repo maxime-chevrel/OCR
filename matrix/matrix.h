@@ -30,7 +30,9 @@ void matrix_set_elem(Matrix mat, size_t row, size_t col, double d);
 void matrix_print(Matrix mat);
 
 /* Additions of two matrix	*/
-//Matrix matrix_add(Matrix mat1, Matrix mat2);
 Matrix matrix_add(Matrix mat1, Matrix mat2, char dispose1, char dispose2);
+
+/*	Multiplication of two matrix	*/
+Matrix matrix_mult(Matrix mat1, Matrix mat2, char dispose1, char dispose2);
 
 #endif
