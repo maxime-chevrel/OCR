@@ -39,6 +39,74 @@ void shuffle(int *array, size_t n){
   }
 }
 
+// Fonction pour sauvegarder les poids et biais
+void save_weights_and_biases(const char* filename, 
+                              double hiddenWeights[numInputs][numHiddenNodes],
+                              double outputWeights[numHiddenNodes][numOutputs],
+                              double hiddenLayerBias[numHiddenNodes],
+                              double outputLayerBias[numOutputs]) {
+    FILE *file = fopen(filename, "wb");
+    if (file == NULL) {
+        perror("Unable to open file for saving");
+        return;
+    }
+    
+    // Sauvegarde des poids cachés
+    fwrite(hiddenWeights, sizeof(double), numInputs * numHiddenNodes, file);
+    // Sauvegarde des poids de sortie
+    fwrite(outputWeights, sizeof(double), numHiddenNodes * numOutputs, file);
+    // Sauvegarde des biais cachés
+    fwrite(hiddenLayerBias, sizeof(double), numHiddenNodes, file);
+    // Sauvegarde des biais de sortie
+    fwrite(outputLayerBias, sizeof(double), numOutputs, file);
+    
+    fclose(file);
+}
+
+// Fonction pour charger les poids et biais
+void load_weights_and_biases(const char* filename, 
+                             double hiddenWeights[numInputs][numHiddenNodes],
+                             double outputWeights[numHiddenNodes][numOutputs],
+                             double hiddenLayerBias[numHiddenNodes],
+                             double outputLayerBias[numOutputs]) {
+    FILE *file = fopen(filename, "rb");
+    if (file == NULL) {
+        perror("Unable to open file for loading");
+        return;
+    }
+    
+    // Chargement des poids cachés
+    if (fread(hiddenWeights, sizeof(double), numInputs * numHiddenNodes, file) != numInputs * numHiddenNodes) {
+        perror("Error reading hiddenWeights");
+        fclose(file);
+        return;
+    }
+    
+    // Chargement des poids de sortie
+    if (fread(outputWeights, sizeof(double), numHiddenNodes * numOutputs, file) != numHiddenNodes * numOutputs) {
+        perror("Error reading outputWeights");
+        fclose(file);
+        return;
+    }
+    
+    // Chargement des biais cachés
+    if (fread(hiddenLayerBias, sizeof(double), numHiddenNodes, file) != numHiddenNodes) {
+        perror("Error reading hiddenLayerBias");
+        fclose(file);
+        return;
+    }
+    
+    // Chargement des biais de sortie
+    if (fread(outputLayerBias, sizeof(double), numOutputs, file) != numOutputs) {
+        perror("Error reading outputLayerBias");
+        fclose(file);
+        return;
+    }
+    
+    fclose(file);
+}
+
+
 int main(void){
   const double lr = 0.1f; //learning rate
   
@@ -50,6 +118,7 @@ int main(void){
 
   double hiddenWeights[numInputs][numHiddenNodes];
   double outputWeights[numHiddenNodes][numOutputs];
+
 
   double training_inputs[numTrainingSets][numInputs] = {{0.0f,0.0f},
                                                         {1.0f,0.0f},
@@ -72,9 +141,11 @@ int main(void){
     outputLayerBias[j] = init_weights();
   }
 
+  load_weights_and_biases("weights_and_biases.bin", hiddenWeights, outputWeights, hiddenLayerBias, outputLayerBias);
+
   int trainingSetOrder[] = {0,1,2,3};
 
-  long int numberOfEpochs = 10;
+  long int numberOfEpochs = 10000;
 
   // Train the neural Network
   
@@ -106,7 +177,7 @@ int main(void){
           activation += hiddenLayer[k] * outputWeights[k][j];
         }
 
-        outputLayer[j] = sigmoid(activation);
+        outputLayer[j] = round(sigmoid(activation));
       }
       printf(" %d sur %ld    :" , epoch, numberOfEpochs);
       PR(training_inputs[i][0], training_inputs[i][1],outputLayer[0],
@@ -154,11 +225,10 @@ int main(void){
         }
       }
 
-
-
     }
   }
   
+  //save_weights_and_biases("weights_and_biases.bin", hiddenWeights, outputWeights, hiddenLayerBias, outputLayerBias);
 
   return 0;
 }
