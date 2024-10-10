@@ -16,8 +16,8 @@ double init_weights() {
 
 
 
-void init_neural_network(neural_network * nn){
-  nn->lr = 0.1;
+void init_neural_network(neural_network * nn,double lr){
+  nn->lr = lr;
 
   for (size_t i = 0; i < numHiddenNodes; i++) {
     for (size_t j = 0; j < numOutputs; j++) {
@@ -40,44 +40,54 @@ void init_neural_network(neural_network * nn){
 
 
 
-double predict(double a, double b){
+void predict(neural_network * nn,double a, double b){
   if(!((a==1 || a==0) && (b==1 || b==0)))
-    errx(1,"valeur d'entré de predict pas bonne");
-  printf("fais la fonction connard\n entrée 1 : %g entrée 2 : %g\n",a , b );
-  return a;
+    errx(1,"valeur d'entrée de predict pas bonne");
+  double inputs[2] = {a,b};
+  for(size_t j = 0; j< numHiddenNodes; j++){
+    double activation = nn->hiddenLayerBias[j];
+
+    for(size_t k = 0; k < 2; k++){
+      activation += inputs[k] * nn->hiddenWeights[k][j];
+    }
+
+    nn->hiddenLayer[j] = sigmoid(activation);
+  }
+
+  //Compute output layer activation
+  for(size_t j = 0; j< numOutputs; j++){
+    double activation = nn->outputLayerBias[j];
+
+    for(size_t k = 0; k < numHiddenNodes; k++){
+      activation += nn->hiddenLayer[k] * nn->outputWeights[k][j];
+    }
+
+    printf("Inputs : %g %g Ouputs : %g  \n",a,b,round(sigmoid(activation)));
+  }
 }
 
 
-static const char* ARGS_HELP =
-    "%s 3.14.15 help:\n"
-    "[ IMAGE mode specific options ]\n"
-    "   -i file: Specifiy the input file (required)\n"
-    "   -o file: Specify the output file (default: out.bmp)\n"
-    "   --show: Show the image being processed, one step at a time\n"
-    "[ TRAIN mode specific options ]\n"
-    "   -n nb: Specifiy the number of iterations to train the neural net with (default is 100 000)\n"
-    "   -o file: Specify the output file to save the neural network\n"
-    "   --batch-size n / -b n: Specify the numbers of elements in a minibatch size (default 100)\n"
-    "   --nb-images n: Specify the number of image to train with. (default 8228)\n"
-    "   --learning-rate n / --step-size n / -l n: Specify the step size (default 0.25)\n"
-    "[ PREDICT mode specific options ]\n"
-    "   -i file: Specify the image file to predict the digit\n"
-    "   -a file: Specify the file containing the weights and biais of the neural network\n"
-    "[ SOLVE mode specific options ]\n"
-    "   -i file: Specify the input file containing the grid to solve (default: grid.txt)"
-    "[ General options ]\n"
-    "   -v: Increase the verbose level (default 0), can be used up to 3 times\n"
-    "   --mode mode: Specify the mode to use. Can be one of IMAGE/TRAIN/GUI/PREDICT/SOLVE (default is GUI)\n"
-    "   -h / --help: Show this help and quit\n"
-    ;
+void print_help_page(char *name) {
+  printf("Usage: %s [options]\n"
+  "[TRAIN MODE OPTIONS]\n"
+  "   -n nb    :  number of training iterations (def : 1 000 000)\n"
+  "   -i file  :  file where is stored the neural network (def : weights_and_biaises.bin)\n"
+  "   -o file  :  file where to save the neural network (def : weights_and_biaises.bin)\n"
+  "   -l nb    :  learning rate (def : weights_and_biaises.bin)\n"
+  "[PREDICT MODE OPTIONS]\n"
+  "   -i file  :  file where is stored the neural network (def : weights_and_biaises.bin)\n"
+  "   -a n,n   :  learning rate (def : weights_and_biaises.bin)\n"
+  ,name);
+}
 
 
 
 int main(int argc, char **argv){
   neural_network nn;
-  init_neural_network(&nn);
+  init_neural_network(&nn, 0.1);
+  //print_help_page("blase");
   if(argc<2)
-    errx(1,"manque d'arguments");
+    errx(1,"lake of arguments");
   else if(strcmp(argv[1],"-t")==0){
     train(&nn);
     return 0;
@@ -86,7 +96,7 @@ int main(int argc, char **argv){
     if(argc<4)
       errx(1,"pas assez d'arguments pour predict");
     else
-      predict(strtod(argv[2],NULL),strtod(argv[3],NULL));
+      predict(&nn,strtod(argv[2],NULL),strtod(argv[3],NULL));
   }
   else
     errx(1,"extension inconnu");
