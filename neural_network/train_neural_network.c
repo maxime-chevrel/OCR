@@ -29,7 +29,7 @@ void shuffle(int *array, size_t n){
   }
 }
 
-void train(neural_network * nn, char * inputfile, char* outputfile, int train_size, int print){
+void train(neural_network * nn, char* outputfile, int train_size, int print){
 
 
 
@@ -46,7 +46,7 @@ void train(neural_network * nn, char * inputfile, char* outputfile, int train_si
                                                           {1.0f}};
 
   
-  load_weights_and_biases(inputfile, nn);
+  //load_weights_and_biases(inputfile, nn);
 
   int trainingSetOrder[] = {0,1,2,3};
 
@@ -55,7 +55,7 @@ void train(neural_network * nn, char * inputfile, char* outputfile, int train_si
   // Train the neural Network
   
   for(long int epoch = 0; epoch < numberOfEpochs; epoch++){
-    printf("%ld\n", epoch);
+//    printf("%ld\n", epoch);
     shuffle(trainingSetOrder, numTrainingSets);
 
     for(size_t x = 0; x<numTrainingSets; x++){

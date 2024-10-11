@@ -19,7 +19,7 @@ double init_weights() {
 
 
 
-void init_neural_network(neural_network * nn,double lr){
+void init_neural_network(neural_network * nn,double lr, char * filename){
   nn->lr = lr;
 
   for (size_t i = 0; i < numHiddenNodes; i++) {
@@ -38,6 +38,8 @@ void init_neural_network(neural_network * nn,double lr){
       nn->hiddenWeights[i][j] = init_weights();
     }
   }
+
+  load_weights_and_biases(filename,nn);
 
 }
 
@@ -130,7 +132,7 @@ int main(int argc, char ** argv) {
     char *mode;
     char *input_file;
     char *output_file;
-    float learning_rate;
+    double learning_rate;
     int print_training;
     double arg1;
     double arg2;
@@ -165,7 +167,7 @@ int main(int argc, char ** argv) {
       {
         char *token = strtok(optarg, ",");
         if (token != NULL) {
-          double temp = strtod(token, NULL);
+          double temp = atof(token);
           if (temp ==0 || temp == 1) {
             opts.arg1 = temp;
           }
@@ -173,13 +175,13 @@ int main(int argc, char ** argv) {
             errx(EXIT_FAILURE,"invalid argument for -a , -arg : refer to -h , -help");
           token = strtok(NULL, ",");
           if (token != NULL) {
-            temp = strtod(token, NULL);
+            temp = atof(token);
             if (temp ==0 || temp == 1) {
               opts.arg2 = temp;
             }
             else
               errx(EXIT_FAILURE,"invalid argument for -a , -arg : refer to -h , -help");
-            opts.arg2 = atoi(token);
+            opts.arg2 = atof(token);
           }
           else {
             errx(EXIT_FAILURE, "invalid argument for -a , -arg : refer to -h , -help");
@@ -204,7 +206,7 @@ int main(int argc, char ** argv) {
         break;
 
       case 'n':
-        opts.arg1 = atof(optarg);
+        opts.training_number = atof(optarg);
         break;
 
       case 'p':
@@ -216,9 +218,9 @@ int main(int argc, char ** argv) {
     }
   }
   neural_network nn;
-  init_neural_network(&nn,opts.learning_rate);
+  init_neural_network(&nn,opts.learning_rate, opts.input_file);
   if (strcmp(opts.mode, "TRAIN") == 0) {
-    train(&nn, opts.input_file, opts.output_file, opts.training_number, opts.print_training);
+    train(&nn, opts.output_file, opts.training_number, opts.print_training);
     return EXIT_SUCCESS;
   } else if (strcmp(opts.mode, "PREDICT") == 0) {
     predict(&nn, opts.arg1, opts.arg2);

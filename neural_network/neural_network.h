@@ -25,6 +25,6 @@ typedef struct neural_network
 
 double init_weights();
 
-void init_neural_network(neural_network * nn, double lr);
+void init_neural_network(neural_network * nn, double lr, char * filename);
 
 void predict(neural_network * nn,double a, double b);
