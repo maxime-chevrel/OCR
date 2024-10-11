@@ -5,6 +5,7 @@
 #include <err.h>
 #include <getopt.h>
 #include <string.h>
+#include <errno.h>
 
 
 #include "neural_network.h"
@@ -19,8 +20,8 @@ double init_weights() {
 
 
 
-void init_neural_network(neural_network * nn,double lr, char * filename){
-  nn->lr = lr;
+void init_neural_network(neural_network * nn, char * filename){
+  nn->lr = 1;
 
   for (size_t i = 0; i < numHiddenNodes; i++) {
     for (size_t j = 0; j < numOutputs; j++) {
@@ -75,7 +76,7 @@ void predict(neural_network * nn,double a, double b){
 const char * print_help_page=
   "Usage: [options]\n"
   "[TRAIN MODE OPTIONS]\n"
-  "   -n nb , --training-number nb  :  number of training iterations (def : 1 000 000)\n"
+  "   -n nb , --training-number nb  :  number of training iterations (def : 10 000)\n"
   "   -i file , --input-file file   :  file where is stored the neural network (def : weights_and_biases.bin)\n"
   "   -o file , --output-file file  :  file where to save the neural network (def : weights_and_biases.bin)\n"
   "   -l nb , --learning-rate       :  learning rate (def : 0.1)\n"
@@ -87,16 +88,15 @@ const char * print_help_page=
   "   -m mode , --mode mode         : switch between the mode PREDICT and TRAIN (def : TRAIN)\n"
   "   -h , --help                   : show this help page\n";
 
-
 /*
 int main(int argc, char **argv){
   neural_network nn;
-  init_neural_network(&nn, 0.1);
-  print_help_page("blase");
+  init_neural_network(&nn,01,"test.bin");
+  //print_help_page("blase");
   if(argc<2)
     errx(1,"lake of arguments");
   else if(strcmp(argv[1],"-t")==0){
-    train(&nn);
+    train(&nn,"test.bin",1000000,1);
     return 0;
   }
   else if(strcmp(argv[1],"-p")==0){
@@ -109,8 +109,8 @@ int main(int argc, char **argv){
     errx(1,"extension inconnu");
   return 0;
 }
-*/
 
+*/
 int main(int argc, char ** argv) {
   int opt;
   int option_index = 0;
@@ -143,11 +143,11 @@ int main(int argc, char ** argv) {
     .mode = "TRAIN",
     .input_file = "weights_and_biases.bin",
     .output_file = "weights_and_biases.bin",
-    .learning_rate = 0.1,
+    .learning_rate = 0.1f,
     .print_training = 0,
     .arg1 = 0,
     .arg2 = 0,
-    .training_number = 1000000
+    .training_number = 10000
 
   };
 
@@ -167,7 +167,7 @@ int main(int argc, char ** argv) {
       {
         char *token = strtok(optarg, ",");
         if (token != NULL) {
-          double temp = atof(token);
+          double temp = strtod(token,NULL);
           if (temp ==0 || temp == 1) {
             opts.arg1 = temp;
           }
@@ -175,13 +175,13 @@ int main(int argc, char ** argv) {
             errx(EXIT_FAILURE,"invalid argument for -a , -arg : refer to -h , -help");
           token = strtok(NULL, ",");
           if (token != NULL) {
-            temp = atof(token);
+            temp = strtod(token,NULL);
             if (temp ==0 || temp == 1) {
               opts.arg2 = temp;
             }
             else
               errx(EXIT_FAILURE,"invalid argument for -a , -arg : refer to -h , -help");
-            opts.arg2 = atof(token);
+            opts.arg2 = strtod(token,NULL);
           }
           else {
             errx(EXIT_FAILURE, "invalid argument for -a , -arg : refer to -h , -help");
@@ -202,11 +202,16 @@ int main(int argc, char ** argv) {
         break;
 
       case 'l':
-        opts.learning_rate = atof(optarg);
+        opts.learning_rate = strtod(optarg, NULL);
         break;
 
       case 'n':
-        opts.training_number = atof(optarg);
+        errno = 0;
+        opts.training_number = strtol(optarg, NULL, 10);
+
+        if (errno != 0) {
+          errx(EXIT_FAILURE, "invalid argument for -n , --training-number : refer to -h , --help");
+        }
         break;
 
       case 'p':
@@ -218,7 +223,8 @@ int main(int argc, char ** argv) {
     }
   }
   neural_network nn;
-  init_neural_network(&nn,opts.learning_rate, opts.input_file);
+  init_neural_network(&nn, opts.input_file);
+
   if (strcmp(opts.mode, "TRAIN") == 0) {
     train(&nn, opts.output_file, opts.training_number, opts.print_training);
     return EXIT_SUCCESS;

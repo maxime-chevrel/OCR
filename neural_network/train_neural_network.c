@@ -29,7 +29,7 @@ void shuffle(int *array, size_t n){
   }
 }
 
-void train(neural_network * nn, char* outputfile, int train_size, int print){
+void train(neural_network * nn, char* outputfile, long int train_size, int print){
 
 
 
@@ -54,88 +54,81 @@ void train(neural_network * nn, char* outputfile, int train_size, int print){
 
   // Train the neural Network
   
-  for(long int epoch = 0; epoch < numberOfEpochs; epoch++){
-//    printf("%ld\n", epoch);
+  for(long int epoch = 0; epoch < numberOfEpochs; epoch++) {
+    //    printf("%ld\n", epoch);
     shuffle(trainingSetOrder, numTrainingSets);
 
-    for(size_t x = 0; x<numTrainingSets; x++){
-      size_t i = trainingSetOrder[x];
+      for (int x=0; x<numTrainingSets; x++) {
 
-      //Forward Pass
+        int i = trainingSetOrder[x];
 
-      //Compute hidden layer activation
-      for(size_t j = 0; j< numHiddenNodes; j++){
-        double activation = nn->hiddenLayerBias[j];
+        // Forward pass
 
-        for(size_t k = 0; k < numInputs; k++){
-          activation += training_inputs[i][k] * nn->hiddenWeights[k][j];
+        // Compute hidden layer activation
+        for (int j=0; j<numHiddenNodes; j++) {
+            double activation = nn->hiddenLayerBias[j];
+             for (int k=0; k<numInputs; k++) {
+                activation += training_inputs[i][k] * nn->hiddenWeights[k][j];
+            }
+            nn->hiddenLayer[j] = sigmoid(activation);
         }
 
-        nn->hiddenLayer[j] = sigmoid(activation);
-      }
-
-      //Compute output layer activation
-      for(size_t j = 0; j< numOutputs; j++){
-        double activation = nn->outputLayerBias[j];
-
-        for(size_t k = 0; k < numHiddenNodes; k++){
-          activation += nn->hiddenLayer[k] * nn->outputWeights[k][j];
+        // Compute output layer activation
+        for (int j=0; j<numOutputs; j++) {
+            double activation = nn->outputLayerBias[j];
+            for (int k=0; k<numHiddenNodes; k++) {
+                activation += nn->hiddenLayer[k] * nn->outputWeights[k][j];
+            }
+            nn->outputLayer[j] = sigmoid(activation);
         }
 
-        nn->outputLayer[j] = sigmoid(activation);
-      }
+        // Print the results from forward pass
+        if(print==1)
+            printf("Input:%g %g Output:%g    Expected Output: %g\n",
+                training_inputs[i][0], training_inputs[i][1],
+                nn->outputLayer[0], training_outputs[i][0]);
 
 
-      if(print==1) {
-        printf ("Input:%g %g Output:%g    Expected Output: %g\n",
-                    training_inputs[i][0], training_inputs[i][1],
-                    nn->outputLayer[0], training_outputs[i][0]);
-      }
 
-      // Backprop
-      
-      //Compute change in output weight
-      
-      double deltaOutput[numOutputs];
-      
-      for( size_t j = 0; j < numOutputs; j++){
-        double error = (training_outputs[i][j] - nn->outputLayer[j]);
-        deltaOutput[j] = error * dSigmoid(nn->outputLayer[j]);
-      }
+        // Backprop
 
-      //Compute change in hidden weights
-      
-      double deltaHidden[numHiddenNodes];
-      for(size_t j = 0; j < numHiddenNodes; j++){
-        double error = 0.0f;
-        for(size_t k = 0; k<numOutputs; k++){
-          error += deltaOutput[k] * nn->outputWeights[j][k];
+        // Compute change in output weights
+        double deltaOutput[numOutputs];
+        for (int j=0; j<numOutputs; j++) {
+            double errorOutput = (training_outputs[i][j] - nn->outputLayer[j]);
+            deltaOutput[j] = errorOutput * dSigmoid(nn->outputLayer[j]);
         }
-        deltaHidden[j] = error * dSigmoid(nn->hiddenLayer[j]);
-      }
 
-
-      // Apply change in output weights
-
-      for(size_t j = 0; j< numOutputs; j++){
-        nn->outputLayerBias[j] += deltaOutput[j] * nn->lr;
-        for(size_t k = 0; k<numHiddenNodes; k++){
-          nn->outputWeights[k][j] += nn->hiddenLayer[k] * deltaOutput[j] * nn->lr;
+        // Compute change in hidden weights
+        double deltaHidden[numHiddenNodes];
+        for (int j=0; j<numHiddenNodes; j++) {
+            double errorHidden = 0.0f;
+            for(int k=0; k<numOutputs; k++) {
+                errorHidden += deltaOutput[k] * nn->outputWeights[j][k];
+            }
+            deltaHidden[j] = errorHidden * dSigmoid(nn->hiddenLayer[j]);
         }
-      }
 
-      
-      // Apply change in hidden weights
-      
-      for(size_t j = 0; j< numHiddenNodes; j++){
-        nn->hiddenLayerBias[j] += deltaHidden[j] * nn->lr;
-        for(size_t k = 0; k<numInputs; k++){
-          nn->hiddenWeights[k][j] += training_inputs[i][k] * deltaHidden[j] * nn->lr;
+        // Apply change in output weights
+        for (int j=0; j<numOutputs; j++) {
+            nn->outputLayerBias[j] += deltaOutput[j] * nn->lr;
+            for (int k=0; k<numHiddenNodes; k++) {
+                nn->outputWeights[k][j] += nn->hiddenLayer[k] * deltaOutput[j] * nn->lr;
+            }
         }
-      }
 
+        // Apply change in hidden weights
+        for (int j=0; j<numHiddenNodes; j++) {
+            nn->hiddenLayerBias[j] += deltaHidden[j] * nn->lr;
+            for(int k=0; k<numInputs; k++) {
+                nn->hiddenWeights[k][j] += training_inputs[i][k] * deltaHidden[j] * nn->lr;
+            }
+        }
     }
+
+
   }
+
   
   save_weights_and_biases(outputfile, nn);
   if(print==1)print_weights_and_biases(nn);
