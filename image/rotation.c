@@ -10,6 +10,7 @@ SDL_Surface * rotation(double angle,SDL_Surface* surface){
 	int center_X = h/2;
 	int center_Y = w/2;
 	SDL_PixelFormat* format = surface -> format;
+	
 	SDL_Surface * res= SDL_CreateRGBSurface(0,w,h,32,0,0,0,0);
 	if(res == NULL){
 		errx(-1,"could not create surface in rotation");

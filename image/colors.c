@@ -49,6 +49,34 @@ void black_and_white(SDL_Surface *surface){
 	}
 	SDL_UnlockSurface(surface);
 }
+Uint8 new_color (Uint8 c, int n){
+	return (Uint8)(255*SDL_pow((double)c/255,n));
+}
+void contrast(SDL_Surface *surface){
+	Uint32* pixels = surface->pixels;
+	int a = SDL_LockSurface(surface);
+	if(a==-1){
+		errx(-1,"could not lock the surface for contrast");
+	}
+	SDL_PixelFormat *format = surface->format;
+	int w = surface->w;
+	for(int i =0 ;i<surface->h;i++){
+		for(int j = 0; j<surface->w;j++){
+			Uint32 pixel = *(pixels+i*w+j);
+			Uint8 r;
+			Uint8 g;
+			Uint8 b;
+			SDL_GetRGB(pixel,format, &r,&g,&b);
+			r = new_color(r,3);
+			g = new_color(g,3);
+			b = new_color(b,3);
+			pixels[i*w+j] = SDL_MapRGB(format,r,g,b);
+		}
+	}
+	SDL_UnlockSurface(surface);
+}
+
+	
 //transform all the pixels into black or white pixels*/
 int main(int argc, char** argv)
 {
@@ -76,7 +104,9 @@ int main(int argc, char** argv)
 
     SDL_SetWindowSize(window,  surface->w, surface->h);
 
-    gray_scale(surface);
+    contrast(surface);
+	gray_scale(surface);
+	black_and_white(surface);
 
     SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
 
